@@ -1,20 +1,24 @@
-import pinecone
 import os
-from dotenv import load_dotenv
 import openai
+from dotenv import load_dotenv
+from pinecone import Pinecone
 
 load_dotenv()
 
-pinecone.init(api_key=os.getenv("PINECONE_API_KEY"), environment=os.getenv("PINECONE_ENV"))
-index = pinecone.Index(os.getenv("PINECONE_INDEX"))
+pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
+index = pc.Index(os.getenv("PINECONE_INDEX"))
 
 def get_embedding(text):
-    response = openai.Embedding.create(model="text-embedding-ada-002", input=[text])
+    response = openai.Embedding.create(
+        model="text-embedding-ada-002",
+        input=[text]
+    )
     return response['data'][0]['embedding']
 
 def buscar_productos(query):
     vector = get_embedding(query)
     resultado = index.query(vector=vector, top_k=5, include_metadata=True)
+    
     productos = []
     for match in resultado['matches']:
         metadata = match['metadata']
